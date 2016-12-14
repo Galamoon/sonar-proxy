@@ -1,0 +1,6 @@
+{
+  "user": "some_user_name",
+  "password": "password",
+  "host": "host_without_protocol",
+  "port": 8081
+}
