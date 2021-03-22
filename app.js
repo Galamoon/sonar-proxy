@@ -6,33 +6,55 @@ const request = require('request');
 const config = require('config');
 
 const app = express();
-const username = process.env.SONAR_USER || config.get('user');
-const password = process.env.SONAR_PASS || config.get('password');
-const sonarHost = process.env.SONAR_HOST || config.get('host');
+
+const proxyConfig = config.get('proxy');
+const sonarqubeConfig = config.get('sonarqube');
 
 app.use(morgan('combined'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 
-app.get('/api/badges/:part', function (req, res) {
-	const part = req.params['part'];
-	const project = req.query['key'];
-	const metric = req.query['metric'];
-	const url = `http://${username}:${password}@${sonarHost}/api/badges/${part}?key=${project}&metric=${metric}`;
 
-	request({ url: url }, function (error, response, body) {
-		if(error){
-			return res.status(500).json({ error: error });
-		}
+app.get('/api/project_badges/measure/', function (req, res) {
+    const project = req.query['project'];
+    const metric = req.query['metric'];
 
-		res.setHeader('Content-Type', 'image/svg+xml');
+    request.post(
+        `${sonarqubeConfig.host}/api/authentication/login`,
+        {
+            form: {
+                login: sonarqubeConfig.login,
+                password: sonarqubeConfig.password
+            }
+        },
+        function (error, response, body) {
+            if (response.statusCode === 200) {
+                request({
+                        url: `${sonarqubeConfig.host}/api/project_badges/measure?project=${project}&metric=${metric}`,
+                        method: "GET",
+                        headers: {
+                            'Cookie': response.headers['set-cookie']
+                        }
+                    },
+                    function (inError, inResponse, inBody) {
+                        if (inResponse.statusCode === 200) {
+                            res.setHeader('Content-Type', inResponse.headers['content-type']);
+                            return res.end(inBody);
+                        } else {
+                            return res.status(401).json({error: true});
+                        }
+                    }
+                );
+            } else {
+                return res.status(401).json({error: true});
+            }
+        }
+    );
 
-		return res.end(body);
-	});
 });
 
-app.listen(process.env.PORT || config.get('port'), function () {
+app.listen(proxyConfig.port, function () {
 });
 
 module.exports = app;

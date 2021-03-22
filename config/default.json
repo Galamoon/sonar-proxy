@@ -1,6 +1,11 @@
 {
-  "user": "some_user_name",
-  "password": "password",
-  "host": "host_without_protocol",
-  "port": 8081
+  "sonarqube": {
+    "login": "login",
+    "password": "password",
+    "host": "host",
+    "port": 9000
+  },
+  "proxy": {
+    "port": 4000
+  }
 }
