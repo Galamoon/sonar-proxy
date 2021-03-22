@@ -16,7 +16,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 
 
-app.get('/api/project_badges/measure/', function (req, res) {
+app.get('/api/badges/measure/', function (req, res) {
     const project = req.query['project'];
     const metric = req.query['metric'];
 
